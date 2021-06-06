@@ -14,7 +14,6 @@ describe("Create User Controller", () =>{
   });
 
   afterAll(async () => {
-    await connection.dropDatabase()
     await connection.close()
   })
 

@@ -7,7 +7,7 @@ import { hash } from 'bcryptjs';
 
 let connection: Connection
 
-describe("Authenticate User Controller", () =>{
+describe("Show Profile User Controller", () =>{
 
   beforeAll(async () => {
     connection = await createConnection();
@@ -18,23 +18,29 @@ describe("Authenticate User Controller", () =>{
 
     await connection.query(
       `INSERT INTO USERS(id, name, email, password, created_at, updated_at)
-      values('${id}', 'alexandre', 'alexandre11@teste.com.br', '${password}', 'now()', 'now()')
+      values('${id}', 'alexandre', 'alexandre12@teste.com.br', '${password}', 'now()', 'now()')
     `)
   });
 
   afterAll(async () => {
     await connection.close()
-  })
+  });
 
-  it("Should be able to authenticate an user", async () => {
+  it("Should be able to show an user profile", async () => {
     const response = await request(app).post("/api/v1/sessions").send({
-      email: "alexandre11@teste.com.br",
+      email: "alexandre12@teste.com.br",
       password: "admin",
     });
 
     const { token } = response.body;
 
-    expect(response.status).toBe(200);
-    expect(token).toBeTruthy();
+    const userProfile = await request(app)
+    .get("/api/v1/profile")
+    .set({
+        Authorization: `Bearer ${token}`
+    });
+
+    expect(userProfile.body).toHaveProperty("id")
+    expect(userProfile.status).toBe(200);
   })
 })

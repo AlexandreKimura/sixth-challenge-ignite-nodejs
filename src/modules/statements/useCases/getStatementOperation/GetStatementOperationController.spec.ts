@@ -7,7 +7,7 @@ import { hash } from 'bcryptjs';
 
 let connection: Connection
 
-describe("Authenticate User Controller", () =>{
+describe("Get Statement Operation Controller", () =>{
 
   beforeAll(async () => {
     connection = await createConnection();
@@ -18,23 +18,40 @@ describe("Authenticate User Controller", () =>{
 
     await connection.query(
       `INSERT INTO USERS(id, name, email, password, created_at, updated_at)
-      values('${id}', 'alexandre', 'alexandre11@teste.com.br', '${password}', 'now()', 'now()')
+      values('${id}', 'alexandre', 'alexandre15@teste.com.br', '${password}', 'now()', 'now()')
     `)
   });
 
   afterAll(async () => {
     await connection.close()
-  })
+  });
 
-  it("Should be able to authenticate an user", async () => {
+  it("Should be able to create a new deposit", async () => {
+
     const response = await request(app).post("/api/v1/sessions").send({
-      email: "alexandre11@teste.com.br",
+      email: "alexandre15@teste.com.br",
       password: "admin",
     });
 
     const { token } = response.body;
 
-    expect(response.status).toBe(200);
-    expect(token).toBeTruthy();
-  })
+    const deposit = await request(app)
+    .post("/api/v1/statements/deposit")
+    .send({
+      amount: 100,
+      description: "Deposit test"
+    })
+    .set({
+      Authorization: `Bearer ${token}`
+    });
+
+    const statement = await request(app)
+    .get(`/api/v1/statements/${deposit.body.id}`)
+    .set({
+      Authorization: `Bearer ${token}`
+    });
+
+    expect(statement.status).toBe(200);
+    expect(statement.body).toHaveProperty("id");
+  });
 })
