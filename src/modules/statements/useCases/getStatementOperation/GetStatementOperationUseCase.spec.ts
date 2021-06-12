@@ -15,6 +15,7 @@ let createStatementUseCase: CreateStatementUseCase
 enum OperationType {
   DEPOSIT = 'deposit',
   WITHDRAW = 'withdraw',
+  TRANSFERS = 'transfers',
 }
 
 describe("List a operation", () => {

@@ -64,4 +64,33 @@ describe("Get Balance Controller", () =>{
     expect(history.status).toBe(200);
     expect(history.body.balance).toEqual(50);
   });
+
+  it("Should be able to get balance with transfer by user", async () => {
+
+    const response = await request(app).post("/api/v1/sessions").send({
+      email: "alexandre14@teste.com.br",
+      password: "admin",
+    });
+
+    const { token } = response.body;
+
+    await request(app)
+    .post("/api/v1/statements/transfers/7fbbc100-d70b-44ec-bee4-d0f5d95054de")
+    .send({
+      amount: 25,
+      description: "Transfer test"
+    })
+    .set({
+      Authorization: `Bearer ${token}`
+    });
+
+    const history = await request(app)
+    .get("/api/v1/statements/balance")
+    .set({
+      Authorization: `Bearer ${token}`
+    });
+
+    expect(history.status).toBe(200);
+    expect(history.body.balance).toEqual(25);
+  });
 })

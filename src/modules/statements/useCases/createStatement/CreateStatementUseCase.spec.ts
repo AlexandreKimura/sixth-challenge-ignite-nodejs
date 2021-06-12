@@ -3,6 +3,7 @@ import { InMemoryUsersRepository } from "@modules/users/repositories/in-memory/I
 import { CreateUserUseCase } from "@modules/users/useCases/createUser/CreateUserUseCase"
 import { ICreateUserDTO } from "@modules/users/useCases/createUser/ICreateUserDTO"
 import { AppError } from "@shared/errors/AppError"
+import { CreateStatementError } from "./CreateStatementError"
 import { CreateStatementUseCase } from "./CreateStatementUseCase"
 
 let createStatementUseCase: CreateStatementUseCase
@@ -13,9 +14,10 @@ let createUserUseCase: CreateUserUseCase
 enum OperationType {
   DEPOSIT = 'deposit',
   WITHDRAW = 'withdraw',
+  TRANSFERS = 'transfers',
 }
 
-describe("Create Deposits Or Withdraws", () => {
+describe("Create Deposits, Withdraws and Transfers", () => {
 
   beforeAll(() => {
     statementRepositoryInMemory = new InMemoryStatementsRepository();
@@ -113,4 +115,73 @@ describe("Create Deposits Or Withdraws", () => {
       });
     }).rejects.toBeInstanceOf(AppError);
   });
+
+  it("Should be able to create a transfer", async () => {
+    const user: ICreateUserDTO = {
+      name: "Alexandre3",
+      email: "Alexandre3@teste.com",
+      password: "123456",
+    };
+
+    const user_receiver: ICreateUserDTO = {
+      name: "Alexandre4",
+      email: "Alexandre4@teste.com",
+      password: "123456",
+    };
+
+    const userSender = await createUserUseCase.execute(user);
+    const userReceiver = await createUserUseCase.execute(user_receiver);
+
+    await createStatementUseCase.execute({
+      user_id: userSender.id,
+      amount: 100,
+      description: "deposit",
+      type: OperationType.DEPOSIT
+    });
+
+    const transfer = await createStatementUseCase.execute({
+      received_id: userReceiver.id,
+      user_id: userSender.id,
+      amount: 100,
+      description: "transfer",
+      type: OperationType.TRANSFERS,
+    });
+
+    expect(transfer).toHaveProperty("id");
+  });
+
+  it("Should not be able to create a transfer with insufficient founds", async () => {
+    const user: ICreateUserDTO = {
+      name: "Alexandre5",
+      email: "Alexandre5@teste.com",
+      password: "123456",
+    };
+
+    const user_receiver: ICreateUserDTO = {
+      name: "Alexandre6",
+      email: "Alexandre6@teste.com",
+      password: "123456",
+    };
+
+    const userSender = await createUserUseCase.execute(user);
+    const userReceiver = await createUserUseCase.execute(user_receiver);
+
+    await createStatementUseCase.execute({
+      user_id: userSender.id,
+      amount: 100,
+      description: "deposit",
+      type: OperationType.DEPOSIT
+    });
+
+    expect(async () => {
+      await createStatementUseCase.execute({
+        received_id: userReceiver.id,
+        user_id: userSender.id,
+        amount: 110,
+        description: "transfer",
+        type: OperationType.TRANSFERS,
+      });
+    }).rejects.toBeInstanceOf(AppError);
+  });
+
 })

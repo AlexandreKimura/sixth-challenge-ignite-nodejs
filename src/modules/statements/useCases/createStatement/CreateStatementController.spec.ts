@@ -92,5 +92,38 @@ describe("Create Statement Controller", () =>{
     });
 
     expect(withdraw.status).toBe(400)
-  })
+  });
+
+  it("Should be able to create a new transfer", async () => {
+
+    const response = await request(app).post("/api/v1/sessions").send({
+      email: "alexandre13@teste.com.br",
+      password: "admin",
+    });
+
+    const { token } = response.body;
+
+    await request(app)
+    .post("/api/v1/statements/deposit")
+    .send({
+      amount: 100,
+      description: "Deposit test"
+    })
+    .set({
+      Authorization: `Bearer ${token}`
+    });
+
+    const transfer = await request(app)
+    .post("/api/v1/statements/transfers/7fbbc100-d70b-44ec-bee4-d0f5d95054de")
+    .send({
+      amount: 100,
+      description: "Transfer test"
+    })
+    .set({
+      Authorization: `Bearer ${token}`
+    });
+
+    expect(transfer.status).toBe(201);
+    expect(transfer.body).toHaveProperty("id");
+  });
 })
